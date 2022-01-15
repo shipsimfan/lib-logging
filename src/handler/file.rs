@@ -1,3 +1,4 @@
+use super::Handler;
 use std::{io::Write, path::Path};
 
 // Sends logs to a file
@@ -6,14 +7,14 @@ pub struct FileHandler {
 }
 
 impl FileHandler {
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, std::io::Error> {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Box<dyn Handler>, std::io::Error> {
         let file = std::fs::OpenOptions::new().append(true).open(path)?;
 
-        Ok(FileHandler { file })
+        Ok(Box::new(FileHandler { file }))
     }
 }
 
-impl super::Handler for FileHandler {
+impl Handler for FileHandler {
     fn flush(&mut self) {
         self.file.flush().ok();
     }

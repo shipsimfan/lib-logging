@@ -1,9 +1,10 @@
+use super::Handler;
 use std::io::{stderr, Write};
 
 // Sends logs to standard error
 pub struct ConsoleHandler;
 
-impl super::Handler for ConsoleHandler {
+impl Handler for ConsoleHandler {
     fn flush(&mut self) {
         stderr().flush().ok();
     }
@@ -13,5 +14,11 @@ impl super::Handler for ConsoleHandler {
 
         stderr().write_all(output.as_bytes()).ok();
         stderr().write_all(&[b'\n']).ok();
+    }
+}
+
+impl ConsoleHandler {
+    pub fn new() -> Box<dyn Handler> {
+        Box::new(ConsoleHandler)
     }
 }

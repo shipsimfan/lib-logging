@@ -22,10 +22,11 @@ pub fn get_logger<S: AsRef<str>>(name: S) -> Logger {
 
 fn get_root_logger() -> Logger {
     ROOT_LOGGER_INIT.call_once(|| unsafe {
-        ROOT_LOGGER = Some(Logger(Arc::new(Mutex::new(LoggerInner::new(
-            String::new(),
-            None,
-        )))))
+        let logger = Logger(Arc::new(Mutex::new(LoggerInner::new(String::new(), None))));
+        logger.add_handler(crate::ConsoleHandler::new());
+        logger.set_level(Some(LogLevel::Warning));
+
+        ROOT_LOGGER = Some(logger);
     });
     unsafe { ROOT_LOGGER.as_ref().unwrap() }.clone()
 }
