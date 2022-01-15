@@ -59,7 +59,7 @@ macro_rules! notice {
 
 #[macro_export]
 macro_rules! info {
-    ($logger:expr, $($arg:tt)*) => ($crate::_log($logger, $crate::LogLevel::Info, file!(), line!(), format_args!($($arg)*)));
+    ($logger:expr, $($arg:tt)*) => ($crate::_log($logger, $crate::LogLevel::Informational, file!(), line!(), format_args!($($arg)*)));
 }
 
 #[macro_export]
