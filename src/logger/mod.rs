@@ -61,7 +61,7 @@ impl Logger {
 
     pub fn get_child<S: AsRef<str>>(&self, suffix: S) -> super::Logger {
         let mut path: Vec<&str> = suffix.as_ref().split("::").collect();
-        path.retain(|part| *part == "");
+        path.retain(|part| *part != "");
         match path.pop() {
             Some(child) => self.get_logger(child, path),
             None => panic!("Attempting to get empty child!"),
