@@ -8,20 +8,61 @@ mod filter;
 mod formatter;
 mod handler;
 mod logger;
+mod record;
 
 pub use filter::*;
 pub use formatter::*;
 pub use handler::*;
 pub use logger::*;
+pub use record::*;
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum LogLevel {
-    Emergency = 0,
-    Alert = 1,
-    Critical = 2,
-    Error = 3,
-    Warning = 4,
-    Notice = 5,
-    Informational = 6,
-    Debug = 7,
+#[doc(hidden)]
+pub fn _log(
+    logger: Logger,
+    level: LogLevel,
+    file: &str,
+    line_number: u32,
+    args: std::fmt::Arguments,
+) {
+    logger.log(level, file.to_owned(), line_number, format!("{}", args))
+}
+
+#[macro_export]
+macro_rules! emergency {
+    ($logger:expr, $($arg:tt)*) => ($crate::_log($logger, LogLevel::Emergency, file!(), line!(), format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! alert {
+    ($logger:expr, $($arg:tt)*) => ($crate::_log($logger, LogLevel::Alert, file!(), line!(), format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! critical {
+    ($logger:expr, $($arg:tt)*) => ($crate::_log($logger, LogLevel::Critical, file!(), line!(), format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! error {
+    ($logger:expr, $($arg:tt)*) => ($crate::_log($logger, LogLevel::Error, file!(), line!(), format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! warning {
+    ($logger:expr, $($arg:tt)*) => ($crate::_log($logger, LogLevel::Warning, file!(), line!(), format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! notice {
+    ($logger:expr, $($arg:tt)*) => ($crate::_log($logger, LogLevel::Notice, file!(), line!(), format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! info {
+    ($logger:expr, $($arg:tt)*) => ($crate::_log($logger, LogLevel::Info, file!(), line!(), format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! debug {
+    ($logger:expr, $($arg:tt)*) => ($crate::_log($logger, LogLevel::Debug, file!(), line!(), format_args!($($arg)*)));
 }
