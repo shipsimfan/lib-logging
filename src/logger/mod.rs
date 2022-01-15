@@ -1,4 +1,4 @@
-use crate::{handler::HandlerContainer, Filter, Handler, LogLevel, Record};
+use crate::{handler::Handler, ConsoleHandler, Filter, LogLevel, Record};
 use inner::Logger as LoggerInner;
 use std::sync::{Arc, Mutex, MutexGuard, Once};
 
@@ -23,7 +23,7 @@ pub fn get_logger<S: AsRef<str>>(name: S) -> Logger {
 fn get_root_logger() -> Logger {
     ROOT_LOGGER_INIT.call_once(|| unsafe {
         let logger = Logger(Arc::new(Mutex::new(LoggerInner::new(String::new(), None))));
-        logger.add_handler(crate::ConsoleHandler::new());
+        logger.add_handler(Handler::new(ConsoleHandler::new()));
         logger.set_level(Some(LogLevel::Warning));
 
         ROOT_LOGGER = Some(logger);
@@ -136,11 +136,11 @@ impl Logger {
         true
     }
 
-    pub fn add_handler(&self, handler: Box<dyn Handler>) -> usize {
+    pub fn add_handler(&self, handler: Handler) -> usize {
         let mut logger = self.logger();
 
         let ret = logger.handler_idx;
-        logger.handlers.push((ret, HandlerContainer::new(handler)));
+        logger.handlers.push((ret, handler));
         logger.handler_idx += 1;
 
         ret

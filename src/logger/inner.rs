@@ -1,4 +1,4 @@
-use crate::{handler::HandlerContainer, Filter, LogLevel};
+use crate::{handler::Handler, Filter, LogLevel};
 use std::collections::HashMap;
 
 pub struct Logger {
@@ -9,7 +9,7 @@ pub struct Logger {
     pub level: Option<LogLevel>,
     pub filters: Vec<(usize, Box<dyn Filter>)>,
     pub filter_idx: usize,
-    pub handlers: Vec<(usize, HandlerContainer)>,
+    pub handlers: Vec<(usize, Handler)>,
     pub handler_idx: usize,
 }
 

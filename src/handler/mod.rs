@@ -9,27 +9,27 @@ pub use file::FileHandler;
 //pub use socket::SocketHandler;
 
 // Responsible for sending the logs to the appropriate destination
-pub trait Handler {
+pub trait HandlerType {
     fn emit(&mut self, record: &Record, formatter: Formatter);
     fn flush(&mut self);
 }
 
-pub struct HandlerContainer {
+pub struct Handler {
     level: Option<LogLevel>,
     formatter: Option<Formatter>,
     filters: Vec<(usize, Box<dyn Filter>)>,
     filter_idx: usize,
-    inner: Box<dyn Handler>,
+    output: Box<dyn HandlerType>,
 }
 
-impl HandlerContainer {
-    pub fn new(inner: Box<dyn Handler>) -> Self {
-        HandlerContainer {
+impl Handler {
+    pub fn new(output: Box<dyn HandlerType>) -> Self {
+        Handler {
             level: None,
             formatter: None,
             filters: Vec::new(),
             filter_idx: 0,
-            inner,
+            output,
         }
     }
 
@@ -73,7 +73,7 @@ impl HandlerContainer {
     }
 
     pub fn flush(&mut self) {
-        self.inner.flush();
+        self.output.flush();
     }
 
     pub fn handle(&mut self, record: &Record) {
@@ -90,7 +90,7 @@ impl HandlerContainer {
     }
 
     pub fn emit(&mut self, record: &Record) {
-        self.inner.emit(
+        self.output.emit(
             record,
             match self.formatter {
                 Some(formatter) => formatter,

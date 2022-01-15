@@ -9,9 +9,10 @@ pub fn get_default_formatter() -> Formatter {
 
 fn default_formatter(record: &Record) -> String {
     format!(
-        "{} | {} | {}",
+        "{} | {}:{} | {}",
         record.level(),
-        record.name(),
+        record.file(),
+        record.line_number(),
         record.message()
     )
 }

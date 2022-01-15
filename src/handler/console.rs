@@ -1,10 +1,10 @@
-use super::Handler;
+use super::HandlerType;
 use std::io::{stderr, Write};
 
 // Sends logs to standard error
 pub struct ConsoleHandler;
 
-impl Handler for ConsoleHandler {
+impl HandlerType for ConsoleHandler {
     fn flush(&mut self) {
         stderr().flush().ok();
     }
@@ -18,7 +18,7 @@ impl Handler for ConsoleHandler {
 }
 
 impl ConsoleHandler {
-    pub fn new() -> Box<dyn Handler> {
+    pub fn new() -> Box<dyn HandlerType> {
         Box::new(ConsoleHandler)
     }
 }
