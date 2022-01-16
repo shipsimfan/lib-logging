@@ -8,7 +8,10 @@ pub struct FileHandler {
 
 impl FileHandler {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Box<dyn HandlerType>, std::io::Error> {
-        let file = std::fs::OpenOptions::new().append(true).open(path)?;
+        let file = std::fs::OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(path)?;
 
         Ok(Box::new(FileHandler { file }))
     }
