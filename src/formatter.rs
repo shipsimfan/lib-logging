@@ -1,18 +1,49 @@
 use crate::Record;
 
-// Specify the layour of logs in the final output
-pub type Formatter = fn(record: &Record) -> String;
-
-pub fn get_default_formatter() -> Formatter {
-    default_formatter
+pub trait Formatter: Send {
+    fn format(&self, record: &Record) -> String;
 }
 
-fn default_formatter(record: &Record) -> String {
-    format!(
-        "{} | {}:{} | {}",
-        record.level(),
-        record.file(),
-        record.line_number(),
-        record.message()
-    )
+struct DefaultFormatter;
+
+static mut FORMATTER: Option<Box<dyn Formatter>> = None;
+
+/*
+ * Sets the formatter
+ * Unsafe to use multi-threaded
+ */
+pub fn set_formatter<F: Formatter + 'static>(formatter: F) {
+    unsafe { FORMATTER = Some(Box::new(formatter)) }
+}
+
+/*
+ * Sets the formatter to the default formatter
+ * Unsafe to use multi-threaded
+ */
+pub fn set_default_formatter() {
+    unsafe { FORMATTER = Some(Box::new(DefaultFormatter)) }
+}
+
+pub fn formatter() -> &'static dyn Formatter {
+    unsafe {
+        match &FORMATTER {
+            Some(formatter) => formatter.as_ref(),
+            None => {
+                set_default_formatter();
+                FORMATTER.as_ref().unwrap().as_ref()
+            }
+        }
+    }
+}
+
+impl Formatter for DefaultFormatter {
+    fn format(&self, record: &Record) -> String {
+        format!(
+            "[{}][{}] {}: {}",
+            record.pathname(),
+            record.timestamp(),
+            record.level(),
+            record.message()
+        )
+    }
 }

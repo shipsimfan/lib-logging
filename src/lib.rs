@@ -1,68 +1,73 @@
-/*
- *  Rust Logging Library
- *      Inspired by Python 3 standard logging module
- *      https://docs.python.org/3/library/logging.html
- */
-
 mod filter;
 mod formatter;
-mod handler;
-mod logger;
+mod level;
+mod output;
 mod record;
 
-pub use filter::*;
-pub use formatter::*;
-pub use handler::*;
-pub use logger::*;
+pub use filter::{clear_filter, clear_logging, set_filter, set_log_level, Filter};
+pub use formatter::{set_default_formatter, set_formatter, Formatter};
+pub use level::*;
+pub use output::{clear_output, set_output, Output};
 pub use record::*;
 
 #[doc(hidden)]
 pub fn _log(
-    logger: &Logger,
+    name: &'static str,
     level: LogLevel,
-    file: &str,
+    file: &'static str,
     line_number: u32,
     args: std::fmt::Arguments,
 ) {
-    logger.log(level, file.to_owned(), line_number, format!("{}", args))
+    if !match filter::log_level() {
+        Some(current_level) => current_level <= level,
+        None => false,
+    } {
+        return;
+    }
+
+    let output = match output::output() {
+        Some(output) => output,
+        None => return,
+    };
+
+    let record = Record::new(name, level, file, line_number, format!("{}", args));
+
+    if !match filter::filter() {
+        Some(filter) => filter.filter(&record),
+        None => true,
+    } {
+        return;
+    }
+
+    output.write_record(&record, formatter::formatter());
 }
 
 #[macro_export]
-macro_rules! emergency {
-    ($logger:expr, $($arg:tt)*) => ($crate::_log(&$logger, $crate::LogLevel::Emergency, file!(), line!(), format_args!($($arg)*)));
-}
-
-#[macro_export]
-macro_rules! alert {
-    ($logger:expr, $($arg:tt)*) => ($crate::_log(&$logger, $crate::LogLevel::Alert, file!(), line!(), format_args!($($arg)*)));
-}
-
-#[macro_export]
-macro_rules! critical {
-    ($logger:expr, $($arg:tt)*) => ($crate::_log(&$logger, $crate::LogLevel::Critical, file!(), line!(), format_args!($($arg)*)));
+macro_rules! fatal {
+    ($($arg:tt)*) => ($crate::_log(module_path!(),$crate::LogLevel::Fatal, file!(), line!(), format_args!($($arg)*)));
 }
 
 #[macro_export]
 macro_rules! error {
-    ($logger:expr, $($arg:tt)*) => ($crate::_log(&$logger, $crate::LogLevel::Error, file!(), line!(), format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::_log(module_path!(),$crate::LogLevel::Error, file!(), line!(), format_args!($($arg)*)));
 }
 
 #[macro_export]
 macro_rules! warning {
-    ($logger:expr, $($arg:tt)*) => ($crate::_log(&$logger, $crate::LogLevel::Warning, file!(), line!(), format_args!($($arg)*)));
-}
-
-#[macro_export]
-macro_rules! notice {
-    ($logger:expr, $($arg:tt)*) => ($crate::_log(&$logger, $crate::LogLevel::Notice, file!(), line!(), format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::_log(module_path!(),$crate::LogLevel::Warning, file!(), line!(), format_args!($($arg)*)));
 }
 
 #[macro_export]
 macro_rules! info {
-    ($logger:expr, $($arg:tt)*) => ($crate::_log(&$logger, $crate::LogLevel::Informational, file!(), line!(), format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::_log(module_path!(),$crate::LogLevel::Informational, file!(), line!(), format_args!($($arg)*)));
 }
 
 #[macro_export]
 macro_rules! debug {
-    ($logger:expr, $($arg:tt)*) => ($crate::_log(&$logger, $crate::LogLevel::Debug, file!(), line!(), format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::_log(module_path!(),$crate::LogLevel::Debug, file!(), line!(), format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! trace {
+    ($($arg:tt)*) => ($crate::_log(module_path!(),$crate::LogLevel::Trace, file!(), line!(), format_args!($($arg)*)));
 }
