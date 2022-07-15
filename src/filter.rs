@@ -1,54 +1,38 @@
 use crate::{LogLevel, Record};
+use std::sync::Once;
 
-pub trait Filter: Send {
-    fn filter(&self, record: &Record) -> bool;
-}
+pub type Filter = fn(record: &Record) -> bool;
 
-/*
- * In almost all use case for loggers, setting of these variables will not
- * be done in a situation for race conditions. That is why these variables
- * are not protected by guards.
- */
+static FILTER_INIT: Once = Once::new();
+static mut FILTER: Option<Filter> = None;
 
-static mut FILTER: Option<Box<dyn Filter>> = None;
+static LOG_INIT: Once = Once::new();
 static mut LOG_LEVEL: Option<LogLevel> = None;
 
 /*
  * Sets the filter
- * Unsafe to use multi-threaded
  */
-pub fn set_filter(filter: Box<dyn Filter>) {
-    unsafe { FILTER = Some(filter) }
+pub fn set_filter(filter: Filter) {
+    if FILTER_INIT.is_completed() {
+        panic!("Attempting to set more than one filter");
+    }
+    FILTER_INIT.call_once(|| unsafe { FILTER = Some(filter) })
 }
 
-/*
- * Removes the filter
- * Unsafe to use multi-threaded
- */
-pub fn clear_filter() {
-    unsafe { FILTER = None }
-}
-
-pub fn filter() -> Option<&'static dyn Filter> {
-    unsafe { FILTER.as_ref().map(|filter| filter.as_ref()) }
+pub fn filter() -> Option<Filter> {
+    unsafe { FILTER }
 }
 
 /*
  * Sets the minimum log level for output
- * Unsafe to use multi-threaded
  */
-pub fn set_log_level(level: LogLevel) {
-    unsafe { LOG_LEVEL = Some(level) }
+pub fn set_minimum_log_level(level: LogLevel) {
+    if LOG_INIT.is_completed() {
+        panic!("Attempting to set more than one minimum log level");
+    }
+    LOG_INIT.call_once(|| unsafe { LOG_LEVEL = Some(level) })
 }
 
-/*
- * Stops all logging output
- * Unsafe to use multi-threaded
- */
-pub fn clear_logging() {
-    unsafe { LOG_LEVEL = None }
-}
-
-pub fn log_level() -> Option<LogLevel> {
+pub fn minimum_log_level() -> Option<LogLevel> {
     unsafe { LOG_LEVEL }
 }

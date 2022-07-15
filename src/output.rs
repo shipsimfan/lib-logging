@@ -1,27 +1,23 @@
 use crate::{Formatter, Record};
+use core::panic;
+use std::sync::Once;
 
-pub trait Output: Send {
-    fn write_record(&self, record: &Record, formatter: &dyn Formatter);
-}
+pub type Output = fn(record: &Record, formatter: Formatter);
 
-static mut OUTPUT: Option<Box<dyn Output>> = None;
+static OUTPUT_INIT: Once = Once::new();
+static mut OUTPUT: Option<Output> = None;
 
 /*
  * Sets the output location
- * Unsafe to use multi-threaded
  */
-pub fn set_output<O: Output + 'static>(output: O) {
-    unsafe { OUTPUT = Some(Box::new(output)) }
+pub fn set_output(output: Output) {
+    if OUTPUT_INIT.is_completed() {
+        panic!("Attempting to set more than log output");
+    }
+
+    OUTPUT_INIT.call_once(|| unsafe { OUTPUT = Some(output) })
 }
 
-/*
- * Clears the logging output
- * Unsafe to use multi-threaded
- */
-pub fn clear_output() {
-    unsafe { OUTPUT = None }
-}
-
-pub fn output() -> Option<&'static dyn Output> {
-    unsafe { OUTPUT.as_ref().map(|output| output.as_ref()) }
+pub fn output() -> Option<Output> {
+    unsafe { OUTPUT }
 }

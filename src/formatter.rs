@@ -1,49 +1,32 @@
 use crate::Record;
+use std::sync::Once;
 
-pub trait Formatter: Send {
-    fn format(&self, record: &Record) -> String;
-}
+pub type Formatter = fn(record: &Record) -> String;
 
-struct DefaultFormatter;
-
-static mut FORMATTER: Option<Box<dyn Formatter>> = None;
+static FORMATTER_INIT: Once = Once::new();
+static mut FORMATTER: Formatter = default_format;
 
 /*
  * Sets the formatter
- * Unsafe to use multi-threaded
  */
-pub fn set_formatter<F: Formatter + 'static>(formatter: F) {
-    unsafe { FORMATTER = Some(Box::new(formatter)) }
-}
-
-/*
- * Sets the formatter to the default formatter
- * Unsafe to use multi-threaded
- */
-pub fn set_default_formatter() {
-    unsafe { FORMATTER = Some(Box::new(DefaultFormatter)) }
-}
-
-pub fn formatter() -> &'static dyn Formatter {
-    unsafe {
-        match &FORMATTER {
-            Some(formatter) => formatter.as_ref(),
-            None => {
-                set_default_formatter();
-                FORMATTER.as_ref().unwrap().as_ref()
-            }
-        }
+pub fn set_formatter(formatter: Formatter) {
+    if FORMATTER_INIT.is_completed() {
+        panic!("Attempting to set more than one formatter");
     }
+
+    FORMATTER_INIT.call_once(|| unsafe { FORMATTER = formatter });
 }
 
-impl Formatter for DefaultFormatter {
-    fn format(&self, record: &Record) -> String {
-        format!(
-            "[{}][{}] {}: {}",
-            record.pathname(),
-            record.timestamp(),
-            record.level(),
-            record.message()
-        )
-    }
+pub fn formatter() -> Formatter {
+    unsafe { FORMATTER }
+}
+
+fn default_format(record: &Record) -> String {
+    format!(
+        "[{}][{}] {}: {}",
+        record.pathname(),
+        record.timestamp(),
+        record.level(),
+        record.message()
+    )
 }

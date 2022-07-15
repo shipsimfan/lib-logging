@@ -4,10 +4,10 @@ mod level;
 mod output;
 mod record;
 
-pub use filter::{clear_filter, clear_logging, set_filter, set_log_level, Filter};
-pub use formatter::{set_default_formatter, set_formatter, Formatter};
+pub use filter::{set_filter, set_minimum_log_level, Filter};
+pub use formatter::{set_formatter, Formatter};
 pub use level::*;
-pub use output::{clear_output, set_output, Output};
+pub use output::{set_output, Output};
 pub use record::*;
 
 #[doc(hidden)]
@@ -18,7 +18,7 @@ pub fn _log(
     line_number: u32,
     args: std::fmt::Arguments,
 ) {
-    if !match filter::log_level() {
+    if !match filter::minimum_log_level() {
         Some(current_level) => current_level <= level,
         None => false,
     } {
@@ -33,13 +33,13 @@ pub fn _log(
     let record = Record::new(name, level, file, line_number, format!("{}", args));
 
     if !match filter::filter() {
-        Some(filter) => filter.filter(&record),
+        Some(filter) => filter(&record),
         None => true,
     } {
         return;
     }
 
-    output.write_record(&record, formatter::formatter());
+    output(&record, formatter::formatter());
 }
 
 #[macro_export]
