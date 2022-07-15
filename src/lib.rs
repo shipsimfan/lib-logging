@@ -3,12 +3,14 @@ mod formatter;
 mod level;
 mod output;
 mod record;
+mod standard;
 
 pub use filter::{set_filter, set_minimum_log_level, Filter};
 pub use formatter::{set_formatter, Formatter};
 pub use level::*;
 pub use output::{set_output, Output};
 pub use record::*;
+pub use standard::*;
 
 #[doc(hidden)]
 pub fn _log(
