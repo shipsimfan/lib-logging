@@ -1,3 +1,5 @@
+use crate::LogOutput;
+
 use super::{LogRecord, SharedState};
 use std::{
     sync::{mpsc::Receiver, Arc},
@@ -8,7 +10,11 @@ use std::{
 const TIMEOUT: Duration = Duration::from_millis(500);
 
 /// Run the log_thread
-pub(super) fn log_thread(state: Arc<SharedState>, log_queue: Receiver<LogRecord>) {
+pub(super) fn log_thread(
+    state: Arc<SharedState>,
+    log_queue: Receiver<LogRecord>,
+    outputs: Vec<Box<dyn LogOutput>>,
+) {
     while !state.is_killed() {
         // Get the next record, or continue to check if we are killed on a timeout
         let record = match log_queue.recv_timeout(TIMEOUT) {

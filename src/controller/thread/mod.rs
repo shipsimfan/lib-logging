@@ -1,3 +1,5 @@
+use crate::LogOutput;
+
 use super::LogRecord;
 use shared_state::SharedState;
 use std::{
@@ -22,14 +24,14 @@ pub(super) struct LogOutputThread {
 
 impl LogOutputThread {
     /// Creates a new [`LogOutputThread`]
-    pub(super) fn new(log_queue_size: usize) -> Self {
+    pub(super) fn new(log_queue_size: usize, outputs: Vec<Box<dyn LogOutput>>) -> Self {
         let (sender, receiver) = std::sync::mpsc::sync_channel(log_queue_size);
 
         let shared_state = SharedState::new();
         let child_shared_state = shared_state.clone();
 
         let join_handle =
-            std::thread::spawn(move || exec::log_thread(child_shared_state, receiver));
+            std::thread::spawn(move || exec::log_thread(child_shared_state, receiver, outputs));
 
         LogOutputThread {
             shared_state,

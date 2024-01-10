@@ -1,3 +1,4 @@
+use crate::LogOutput;
 use record::LogRecord;
 use thread::LogOutputThread;
 
@@ -14,8 +15,8 @@ impl LogController {
     pub const DEFAULT_QUEUE_SIZE: usize = 256;
 
     /// Creates a new [`LogController`]
-    pub fn new(log_queue_size: usize) -> Self {
-        let log_output_thread = LogOutputThread::new(log_queue_size);
+    pub fn new(log_queue_size: usize, outputs: Vec<Box<dyn LogOutput>>) -> Self {
+        let log_output_thread = LogOutputThread::new(log_queue_size, outputs);
 
         LogController { log_output_thread }
     }
@@ -23,6 +24,7 @@ impl LogController {
 
 impl Default for LogController {
     fn default() -> Self {
-        LogController::new(Self::DEFAULT_QUEUE_SIZE)
+        // TODO: Add `stdout` and `stderr` to outputs
+        LogController::new(Self::DEFAULT_QUEUE_SIZE, Vec::new())
     }
 }
