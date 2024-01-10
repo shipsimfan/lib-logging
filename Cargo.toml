@@ -1,7 +1,9 @@
 [package]
-edition = "2021"
 name = "logging"
-version = "0.1.0"
-
-[dependencies]
-chrono = "0.4"
+version = "2.0.0"
+description = "A logging library"
+authors = ["Lance Hart <me@lancehart>"]
+edition = "2021"
+repository = "https://github.com/shipsimfan/lib-logging.git"
+license = "GPL-3.0-or-later"
+publish = false
